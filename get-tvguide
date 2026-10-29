@@ -3,7 +3,7 @@
 # Configuration parameters
 HDHOMERUN_IP="192.168.20.9"
 JELLYFIN_URL="http://192.168.2.147:8096"
-JELLYFIN_API="b8e98fdac4fb4647ade6673eb96df591"
+JELLYFIN_API="xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 JELLYFIN_CFG="/DATA/AppData/jellyfin/config"
 VERBOSE_MODE=1
 
