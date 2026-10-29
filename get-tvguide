@@ -5,7 +5,7 @@ HDHOMERUN_IP="192.168.20.9"
 JELLYFIN_URL="http://192.168.2.147:8096"
 JELLYFIN_API="xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 JELLYFIN_CFG="/DATA/AppData/jellyfin/config"
-TVSCRIPT_LOC="/home/byron/"
+TVSCRIPT_LOC="/DATA/AppData/jellyfin/config/task"
 VERBOSE_MODE=1 # Output progress to console
 
 # Enter script directory
