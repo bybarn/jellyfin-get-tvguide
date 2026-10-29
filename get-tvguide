@@ -5,10 +5,11 @@ HDHOMERUN_IP="192.168.20.9"
 JELLYFIN_URL="http://192.168.2.147:8096"
 JELLYFIN_API="xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 JELLYFIN_CFG="/DATA/AppData/jellyfin/config"
-VERBOSE_MODE=1
+TVSCRIPT_LOC="/home/byron/"
+VERBOSE_MODE=1 # Output progress to console
 
 # Enter script directory
-cd /DATA/AppData/jellyfin/config/task/
+cd $TVSCRIPT_LOC
 
 if (( $VERBOSE_MODE )); then
     clear
@@ -16,7 +17,8 @@ if (( $VERBOSE_MODE )); then
     echo "HDHomeRun IP: $HDHOMERUN_IP"
     echo "Jellyfin URL: $JELLYFIN_URL"
     echo "Jellyfin API Key: $JELLYFIN_API"
-    echo "Jellyfin Config folder: $JELLYFIN_CFG"
+    echo "Jellyfin Config directory: $JELLYFIN_CFG"
+    echo "TV Guide update script directory: $TVSCRIPT_LOC"
 fi
 
 # Fetch the HDHomeRun DeviceAuth token
