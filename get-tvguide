@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+# Configuration parameters
+HDHOMERUN_IP="192.168.20.9"
+JELLYFIN_URL="http://192.168.2.147:8096"
+JELLYFIN_API="b8e98fdac4fb4647ade6673eb96df591"
+JELLYFIN_CFG="/DATA/AppData/jellyfin/config"
+VERBOSE_MODE=1
+
+# Enter script directory
+cd /DATA/AppData/jellyfin/config/task/
+
+if (( $VERBOSE_MODE )); then
+    clear
+    echo "Verbose output: Enabled"
+    echo "HDHomeRun IP: $HDHOMERUN_IP"
+    echo "Jellyfin URL: $JELLYFIN_URL"
+    echo "Jellyfin API Key: $JELLYFIN_API"
+    echo "Jellyfin Config folder: $JELLYFIN_CFG"
+fi
+
+# Fetch the HDHomeRun DeviceAuth token
+DEVICE_AUTH=$(/usr/bin/curl -s "http://$HDHOMERUN_IP/discover.json" | /usr/bin/grep -o '"DeviceAuth":"[^"]*' | /usr/bin/sed 's/"DeviceAuth":"//')
+if [ -z "$DEVICE_AUTH" ]; then
+    if (( $VERBOSE_MODE )); then echo "Error fetching the HDHomeRun DeviceAuth token"; fi
+    exit 1
+fi
+if (( $VERBOSE_MODE )); then echo "Fetched the HDHomeRun DeviceAuth token: $DEVICE_AUTH"; fi
+
+# Construct the SiliconDust XMLTV URL
+GUIDE_URL="https://api.hdhomerun.com/api/xmltv?DeviceAuth=$DEVICE_AUTH"
+if (( $VERBOSE_MODE )); then
+    echo "Constructed the SiliconDust XMLTV URL:"
+    echo "  $GUIDE_URL"
+fi
+
+# Construct the authorization header for Jellyfin API
+AUTH_HEADER="Authorization: MediaBrowser Token=\"$JELLYFIN_API\""
+if (( $VERBOSE_MODE )); then
+    echo "Constructed the authorization header for Jellyfin API:"
+    echo "  $AUTH_HEADER"
+fi
+
+# Fetch the TV Guide Data Provider ID
+PROVIDER_ID=$(/usr/bin/grep -B 1 "<Type>XMLTV</Type>" "$JELLYFIN_CFG"/livetv.xml | /usr/bin/grep -o "<Id>[^<]*" | /usr/bin/sed 's/<Id>//')
+if [ -z "$PROVIDER_ID" ]; then
+    if (( $VERBOSE_MODE )); then echo "Error fetching the TV Guide Data Provider ID"; fi
+    exit 1
+fi
+if (( $VERBOSE_MODE )); then echo "Fetched TV Guide Data Provider ID: $DEVICE_AUTH"; fi
+
+# Update the provider entry in-place by matching the JSON Id field
+STATUS_CODE=$(/usr/bin/curl -s -o /dev/null -w "%{http_code}" -X POST "$JELLYFIN_URL/LiveTv/ListingProviders?id=$PROVIDER_ID" -H "$AUTH_HEADER" -H "Content-Type: application/json" -d "{\"Id\":\"$PROVIDER_ID\",\"Type\":\"XMLTV\",\"Path\":\"$GUIDE_URL\",\"EnableAllTuners\":true}")
+if [ "$STATUS_CODE" -eq 200 ] || [ "$STATUS_CODE" -eq 204 ]; then
+    if (( $VERBOSE_MODE )); then echo "The XMLTV TV Guide Data Provider was successfully updated"; fi
+else
+    if (( $VERBOSE_MODE )); then echo "The XMLTV TV Guide Data Provider update failed (status $STATUS_CODE)"; fi
+    exit 1
+fi
