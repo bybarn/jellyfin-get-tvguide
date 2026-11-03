@@ -5,6 +5,6 @@
 
 3. Update the configuration parameters section with your:
    HDHomeRun IP Address
-   Jellyfin URL (Example: http://192.168.2.147:8096)
+   Jellyfin URL (Example: http://1932.1678.1.123:8096)
    Jellyfin API Key (This can be generated in Jellyfin > Dashboard > API Keys)
    Verify/update the Jellyfin base URL for JELLYFIN_CFG, TVSCRIPT_DIR, and TVSCRIPT_LOG
