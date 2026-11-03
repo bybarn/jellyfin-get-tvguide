@@ -1,61 +1,71 @@
 #!/usr/bin/env bash
 
 # Configuration parameters
-HDHOMERUN_IP="192.168.20.9"
-JELLYFIN_URL="http://192.168.2.147:8096"
-JELLYFIN_API="xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-JELLYFIN_CFG="/DATA/AppData/jellyfin/config"
-TVSCRIPT_LOC="/DATA/AppData/jellyfin/config/task"
-VERBOSE_MODE=0 # 1 will output to console
+CONSOLE_MODE=0 # 1 will output to console
+HDHOMERUN_IP="<< HDHOMERUN IP ADDRESS >>"
+JELLYFIN_URL="<< JELLYFIN URL >>"
+JELLYFIN_API="<< JELLYFIN API KEY >>"
+JELLYFIN_CFG="/DATA/AppData/jellyfin/config/livetv.xml"
+TVSCRIPT_DIR="/DATA/AppData/jellyfin/config/task/"
+TVSCRIPT_LOG="/DATA/AppData/jellyfin/config/log/get-tvguide.log"
 
-# Enter script directory
-cd $TVSCRIPT_LOC
+# Logging functions
+log_entry() {
+    local timestamp=$(date +'%Y-%m-%d %H:%M:%S.%3N %z')
+    printf "[%s] [%s] %s\n" "$timestamp" "$1" "$2" >> "$TVSCRIPT_LOG"
+}
+log_dbg() { log_entry "DBG" "$1"; }
+log_nfo() { log_entry "INF" "$1"; }
+log_wrn() { log_entry "WRN" "$1"; }
+log_err() { log_entry "ERR" "$1"; }
 
-if (( $VERBOSE_MODE )); then
-    clear
-    echo "Verbose output: Enabled"
+cd $TVSCRIPT_DIR
+log_nfo "Updating TV Guide Data Provider XMLTV for Live TV..."
+
+if (( $CONSOLE_MODE )); then
+    clear # Clear console for fresh output
+    echo "Console output: Enabled"
     echo "HDHomeRun IP: $HDHOMERUN_IP"
     echo "Jellyfin URL: $JELLYFIN_URL"
     echo "Jellyfin API Key: $JELLYFIN_API"
-    echo "Jellyfin Config directory: $JELLYFIN_CFG"
-    echo "TV Guide update script directory: $TVSCRIPT_LOC"
+    echo "Jellyfin Config file: $JELLYFIN_CFG"
+    echo "Script directory: $TVSCRIPT_DIR"
+    echo "Script log file: $TVSCRIPT_LOG"
 fi
 
 # Fetch the HDHomeRun DeviceAuth token
-DEVICE_AUTH=$(/usr/bin/curl -s "http://$HDHOMERUN_IP/discover.json" | /usr/bin/grep -o '"DeviceAuth":"[^"]*' | /usr/bin/sed 's/"DeviceAuth":"//')
+DEVICE_AUTH=$(/usr/bin/curl -s "http://$HDHOMERUN_IP/discover.json" | /usr/bin/grep -Po '"DeviceAuth":"\K[^"]+')
 if [ -z "$DEVICE_AUTH" ]; then
-    if (( $VERBOSE_MODE )); then echo "Error fetching the HDHomeRun DeviceAuth token"; fi
+    log_err "TV Guide update failed fetching the HDHR DeviceAuth token"
+    (( CONSOLE_MODE )) && echo "Error fetching the HDHomeRun DeviceAuth token"
     exit 1
 fi
-if (( $VERBOSE_MODE )); then echo "Fetched the HDHomeRun DeviceAuth token: $DEVICE_AUTH"; fi
+(( CONSOLE_MODE )) && echo "Fetched the HDHomeRun DeviceAuth token: $DEVICE_AUTH"
 
 # Construct the SiliconDust XMLTV URL
 GUIDE_URL="https://api.hdhomerun.com/api/xmltv?DeviceAuth=$DEVICE_AUTH"
-if (( $VERBOSE_MODE )); then
-    echo "Constructed the SiliconDust XMLTV URL:"
-    echo "  $GUIDE_URL"
-fi
+(( CONSOLE_MODE )) && echo -e "Constructed the SiliconDust XMLTV URL:\n  $GUIDE_URL"
 
 # Construct the authorization header for Jellyfin API
 AUTH_HEADER="Authorization: MediaBrowser Token=\"$JELLYFIN_API\""
-if (( $VERBOSE_MODE )); then
-    echo "Constructed the authorization header for Jellyfin API:"
-    echo "  $AUTH_HEADER"
-fi
+(( CONSOLE_MODE )) && echo -e "Constructed the authorization header for Jellyfin API:\n  $AUTH_HEADER"
 
 # Fetch the TV Guide Data Provider ID
-PROVIDER_ID=$(/usr/bin/grep -B 1 "<Type>XMLTV</Type>" "$JELLYFIN_CFG"/livetv.xml | /usr/bin/grep -o "<Id>[^<]*" | /usr/bin/sed 's/<Id>//')
+PROVIDER_ID=$(/usr/bin/grep -oP '(?<=<Id>)[a-f0-9]{32}(?=</Id>)' "$JELLYFIN_CFG" | tail -n 1)
 if [ -z "$PROVIDER_ID" ]; then
-    if (( $VERBOSE_MODE )); then echo "Error fetching the TV Guide Data Provider ID"; fi
+    log_err "TV Guide update failed fetching the Data Guide Provider Id"
+    (( CONSOLE_MODE )) && echo "Error fetching the TV Guide Data Provider ID"
     exit 1
 fi
-if (( $VERBOSE_MODE )); then echo "Fetched TV Guide Data Provider ID: $DEVICE_AUTH"; fi
+(( CONSOLE_MODE )) && echo "Fetched TV Guide Data Provider ID: $PROVIDER_ID"
 
 # Update the provider entry in-place by matching the JSON Id field
-STATUS_CODE=$(/usr/bin/curl -s -o /dev/null -w "%{http_code}" -X POST "$JELLYFIN_URL/LiveTv/ListingProviders?id=$PROVIDER_ID" -H "$AUTH_HEADER" -H "Content-Type: application/json" -d "{\"Id\":\"$PROVIDER_ID\",\"Type\":\"XMLTV\",\"Path\":\"$GUIDE_URL\",\"EnableAllTuners\":true}")
+STATUS_CODE=$(/usr/bin/curl -s -o /dev/null -w "%{http_code}" -X POST "$JELLYFIN_URL/LiveTv/ListingProviders?id=$PROVIDER_ID" -H "$AUTH_HEADER" -H "Content-Type: application/json" -d "{\"Id\":\"$PROVIDER_ID\",\"Type\":\"XMLTV\",\"Path\":\"$GUIDE_URL\",\"EnableTuners\":true}")
 if [ "$STATUS_CODE" -eq 200 ] || [ "$STATUS_CODE" -eq 204 ]; then
-    if (( $VERBOSE_MODE )); then echo "The XMLTV TV Guide Data Provider was successfully updated"; fi
+    log_nfo "TV Guide Data Provider XMLTV was updated (status $STATUS_CODE)"
+    (( CONSOLE_MODE )) && echo "TV Guide Data Provider XMLTV was updated (status $STATUS_CODE)"
 else
-    if (( $VERBOSE_MODE )); then echo "The XMLTV TV Guide Data Provider update failed (status $STATUS_CODE)"; fi
+    log_err "TV Guide Data Provider XMLTV update failed (status $STATUS_CODE)"
+    (( CONSOLE_MODE )) && echo "TV Guide Data Provider XMLTV update failed (status $STATUS_CODE)"
     exit 1
 fi
