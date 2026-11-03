@@ -8,3 +8,7 @@
    - Jellyfin URL (Example: http://1932.1678.1.123:8096)
    - Jellyfin API Key (This can be generated in Jellyfin > Dashboard > API Keys)
    - Verify/update the Jellyfin base URL for JELLYFIN_CFG, TVSCRIPT_DIR, and TVSCRIPT_LOG
+
+4. Use cron to schedule the script to run periodically
+   - Example: 0 6,18 * * * /DATA/AppData/jellyfin/config/task/get-tvguide
+   - (this will run the script at 6am and 6pm each day)
