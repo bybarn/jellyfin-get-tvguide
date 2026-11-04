@@ -6,7 +6,7 @@ HDHOMERUN_IP="<< HDHOMERUN IP ADDRESS >>"
 JELLYFIN_URL="<< JELLYFIN URL >>"
 JELLYFIN_API="<< JELLYFIN API KEY >>"
 JELLYFIN_CFG="/DATA/AppData/jellyfin/config/livetv.xml"
-TVSCRIPT_DIR="/DATA/AppData/jellyfin/config/task/"
+TVSCRIPT_DIR="/DATA/AppData/jellyfin/config/job/"
 TVSCRIPT_LOG="/DATA/AppData/jellyfin/config/log/get-tvguide.log"
 
 # Logging functions
