@@ -1,9 +1,9 @@
-1. Create a sub directory named 'task' in your Jellyfin config directory
+1. Create a sub directory named 'job' in your Jellyfin config directory
 
-2. Copy the get-tvguide bash script into the task folder. Ensure the permissions and owner is correct.
+2. Copy the get-tvguide bash script into the job folder. Ensure the permissions and owner is correct.
    - Example: -rwxr--r-- 1 root root 3197 Nov  3 08:07 get-tvguide
 
-3. Update the configuration parameters section with your:
+3. Update the configuration parameters section with your values:
    - HDHomeRun IP Address
    - Jellyfin URL (Example: http://1932.1678.1.123:8096)
    - Jellyfin API Key (This can be generated in Jellyfin > Dashboard > API Keys)
