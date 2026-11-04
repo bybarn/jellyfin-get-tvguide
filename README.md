@@ -10,5 +10,5 @@
    - Verify/update the Jellyfin base URL for JELLYFIN_CFG, TVSCRIPT_DIR, and TVSCRIPT_LOG
 
 4. Use cron to schedule the script to run periodically
-   - Example: 0 6,18 * * * /DATA/AppData/jellyfin/config/task/get-tvguide
+   - Example: 0 6,18 * * * /DATA/AppData/jellyfin/config/job/get-tvguide
    - (this will run the script at 6am and 6pm each day)
